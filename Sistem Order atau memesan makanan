@@ -1,0 +1,220 @@
+Tentu, ini penjelasan kodingan Anda **tepat di samping setiap bagiannya**, disajikan dalam format yang mudah dibaca.
+
+```dart
+import 'package:flutter/material.dart';
+
+
+// =========================
+// 1. MODEL DATA
+// =========================
+
+class ItemMenu { // Merepresentasikan satu item makanan/minuman.
+  final String nama; // Nama item, e.g., 'Nasi Goreng'.
+  final double harga; // Harga item, e.g., 25000.0.
+
+  ItemMenu(this.nama, this.harga); // Constructor untuk membuat objek ItemMenu.
+}
+
+class Pesanan { // Merepresentasikan pesanan yang sudah masuk keranjang.
+  final ItemMenu item; // Item menu yang dipesan.
+  int jumlah; // Kuantitas (jumlah) item yang dipesan.
+
+  Pesanan(this.item, this.jumlah); // Constructor untuk membuat objek Pesanan.
+}
+
+
+// =========================
+// 2. DATA DUMMY (MOCK)
+// =========================
+
+final List<ItemMenu> mockMenu = [ // Daftar statis (dummy) item menu.
+  ItemMenu('Nasi Goreng', 25000), // Item 1
+  ItemMenu('Ayam Bakar', 35000), // Item 2
+  ItemMenu('Es Teh Manis', 8000), // Item 3
+  ItemMenu('Jus Jeruk', 12000), // Item 4
+  ItemMenu('Sate Kambing', 45000), // Item 5
+  ItemMenu('Gado-Gado', 15000), // Item 6
+];
+
+
+// =========================
+// 3. WIDGET UTAMA APLIKASI
+// =========================
+
+void main() { // Fungsi utama yang menjalankan aplikasi.
+  runApp(const FoodOrderWireframeApp()); // Menjalankan widget root aplikasi.
+}
+
+class FoodOrderWireframeApp extends StatelessWidget { // Widget statis (root) aplikasi.
+  const FoodOrderWireframeApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp( // Menggunakan MaterialApp sebagai basis aplikasi.
+      debugShowCheckedModeBanner: false, // Menyembunyikan banner 'debug'.
+      title: 'Wireframe Sistem Order',
+      theme: ThemeData( // Mengatur tema dan font aplikasi.
+        primarySwatch: Colors.blueGrey,
+        fontFamily: 'Inter',
+      ),
+      home: const MenuOrderScreenWireframe(), // Layar awal aplikasi.
+    );
+  }
+}
+
+
+// =========================
+// 4. LAYAR PEMESANAN (STATEFUL)
+// =========================
+
+class MenuOrderScreenWireframe extends StatefulWidget { // Widget utama yang mengelola state keranjang.
+  const MenuOrderScreenWireframe({super.key});
+
+  @override
+  State<MenuOrderScreenWireframe> createState() => _MenuOrderScreenWireframeState();
+}
+
+class _MenuOrderScreenWireframeState extends State<MenuOrderScreenWireframe> {
+ 
+  final List<Pesanan> keranjang = []; // Variabel state: Daftar pesanan yang masuk keranjang.
+
+  
+  double hitungTotalBiaya() { // Fungsi untuk menghitung total biaya semua item di keranjang.
+    // Menggunakan 'fold' untuk menjumlahkan (harga * jumlah) dari setiap pesanan.
+    return keranjang.fold(0.0, (sum, item) => sum + (item.item.harga * item.jumlah)); 
+  }
+
+ 
+  void tambahPesanan(ItemMenu item) { // Fungsi untuk menambahkan atau memperbarui item di keranjang.
+    setState(() { // Memanggil setState untuk memperbarui UI setelah data berubah.
+      
+      // Mencari apakah item sudah ada di keranjang.
+      var existingOrder = keranjang.where((p) => p.item == item).toList();
+      if (existingOrder.isNotEmpty) {
+        existingOrder.first.jumlah++; // Jika sudah ada, tambahkan jumlahnya (kuantitas +1).
+      } else {
+        keranjang.add(Pesanan(item, 1)); // Jika belum ada, tambahkan sebagai pesanan baru (kuantitas 1).
+      }
+    });
+  }
+
+  
+
+  // -------------------------
+  // SUB-WIDGET: ITEM MENU
+  // -------------------------
+  Widget _buildMenuItem(ItemMenu item) { // Fungsi untuk membuat tampilan satu item menu (kartu).
+    
+    return Container( // Kartu Menu
+      margin: const EdgeInsets.only(bottom: 12.0),
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8.0),
+        color: Colors.white,
+      ),
+      child: Column( 
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row( // Baris Nama dan Harga
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(item.nama, // Menampilkan nama item
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+              ),
+              Text('Rp${item.harga.toInt()}', // Menampilkan harga item
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueGrey),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12.0),
+          
+          Row( // Baris Tombol Tambah
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              
+              ElevatedButton( // Tombol untuk menambahkan item ke keranjang.
+                onPressed: () => tambahPesanan(item), // Memanggil fungsi tambahPesanan saat ditekan.
+                style: ElevatedButton.styleFrom( /* ... styling ... */ ),
+                child: const Text('Tambah ke Keranjang', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+    // -------------------------
+  // WIDGET UTAMA (BODY)
+  // -------------------------
+
+  @override
+  Widget build(BuildContext context) {
+  
+    return Scaffold( // Struktur dasar layar.
+    
+      appBar: AppBar( // Bilah atas (Header)
+        title: const Text('Sistem Order Makanan', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.blueGrey.shade700,
+      ),
+      body: Column( // Mengatur layout body dalam kolom (daftar menu di atas, total/checkout di bawah).
+        children: [
+         
+          Expanded( // Daftar Menu (mengambil sisa ruang layar).
+            child: Padding( 
+              padding: const EdgeInsets.all(16.0),
+              child: ListView.builder( // Membuat daftar item yang dapat discroll secara efisien.
+                itemCount: mockMenu.length, // Jumlah item sesuai data dummy.
+                itemBuilder: (context, index) { // Fungsi untuk membangun setiap item dalam list.
+                  return _buildMenuItem(mockMenu[index]); // Memanggil fungsi kartu item menu.
+                },
+              ),
+            ),
+          ),
+          
+          
+          Container( // Bar Total Biaya dan Checkout (Footer)
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration( /* ... styling ... */ ),
+            child: Row( // Mengatur layout total biaya (kiri) dan tombol checkout (kanan).
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column( // Tampilan Total Biaya
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Total Biaya:',
+                      style: TextStyle(fontSize: 14, color: Colors.black54),
+                    ),
+                    Text(
+                      'Rp${hitungTotalBiaya().toInt()}', // Menampilkan hasil perhitungan total biaya (otomatis terupdate).
+                      style: const TextStyle( /* ... styling ... */ ),
+                    ),
+                  ],
+                ),
+                
+               
+                ElevatedButton( // Tombol Checkout
+                  onPressed: () {
+                    // Simulasi proses checkout
+                    String status = keranjang.isEmpty ? 'Keranjang kosong!' : 'Memproses ${keranjang.length} item...';
+                    // Menampilkan pop-up notifikasi (SnackBar)
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Checkout diproses. $status')),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom( /* ... styling ... */ ),
+                  child: const Text(
+                    'Checkout',
+                    style: TextStyle(fontSize: 18, color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
